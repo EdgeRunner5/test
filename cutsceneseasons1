@@ -1,5 +1,46 @@
-return {
-	{
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Camera = game.Workspace.CurrentCamera
+local Character = game.Players.LocalPlayer.Character
+
+local function Cinematic(cinematicsModule)
+    local CurrentCameraCFrame = Camera.CFrame
+    local FrameTime = 0
+    local Connection
+    
+    -- Disable auto-rotation and switch camera type
+    Character.Humanoid.AutoRotate = false
+    Camera.CameraType = Enum.CameraType.Scriptable
+
+    -- Start cinematic
+    Connection = RunService.RenderStepped:Connect(function(DT)
+        FrameTime = FrameTime + (DT * 60)
+        local NeededFrameIndex = tonumber(math.ceil(FrameTime))
+        local NeededFrame = cinematicsModule[NeededFrameIndex]
+
+        if NeededFrame then
+            local tweenInfo = TweenInfo.new(0.015, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+            local tweenGoal = {CFrame = Character.HumanoidRootPart.CFrame * NeededFrame.cframe}
+            
+            local tween = TweenService:Create(Camera, tweenInfo, tweenGoal)
+            tween:Play()
+            Camera.FieldOfView = NeededFrame.fov
+        else
+            -- Reset camera settings after cinematic ends
+            if Connection then
+                Connection:Disconnect()
+            end
+            Camera.FieldOfView = 70
+            Camera.CameraType = Enum.CameraType.Custom
+            Camera.CFrame = CurrentCameraCFrame
+            Character.Humanoid.AutoRotate = true
+        end
+    end)
+end
+
+local cutsceneData = {
+
+    {
 		["cframe"] = CFrame.new(-4.70363712310791, 5.429867744445801, -11.744831085205078, -0.9424536824226379, 0.06618531048297882, -0.32771971821784973, -0.000039793550968170166, 0.9801878333091736, 0.19807028770446777, 0.33433619141578674, 0.18668514490127563, -0.9237790107727051),
 		["fov"] = 70
 	},
@@ -1819,4 +1860,6 @@ return {
 		["cframe"] = CFrame.new(-2.215762138366699, 133.82489013671875, -5.414130687713623, -0.7861925959587097, -0.19267819821834564, -0.5871767997741699, 5.424022674560547e-6, 0.9501501321792603, -0.31179279088974, 0.6179817914962769, -0.24513232707977295, -0.7469999194145203),
 		["fov"] = 65
 	}
+
 }
+Cinematic(cutsceneData)
